@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline';" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Today Bubble</title>
+<style>
+:root{
+  --bg:#edf4ff;
+  --bg-top:#f8fbff;
+  --bg-bottom:#edf4ff;
+  --glow-a:rgba(255,255,255,0.96);
+  --glow-b:rgba(197,223,255,0.58);
+  --ink:#22304d;
+  --ink-soft:#637291;
+  --ink-faint:#8794af;
+  --line:rgba(99,114,145,0.18);
+  --line-strong:rgba(99,114,145,0.28);
+  --surface:rgba(255,255,255,0.68);
+  --surface-strong:rgba(255,255,255,0.86);
+  --surface-soft:rgba(255,255,255,0.46);
+  --accent:#4f7cff;
+  --accent-soft:rgba(79,124,255,0.12);
+  --today:#2f9d74;
+  --today-soft:rgba(47,157,116,0.12);
+  --danger:#cc5e73;
+  --danger-soft:rgba(204,94,115,0.12);
+  --bubble-highlight:rgba(255,255,255,0.96);
+  --bubble-mid:rgba(236,244,255,0.78);
+  --bubble-base:rgba(225,238,255,0.90);
+  --compact-mid:rgba(225,239,255,0.86);
+  --compact-base:rgba(209,227,255,0.94);
+  --shadow:0 18px 42px rgba(53,73,120,0.14);
+  --shadow-soft:0 10px 24px rgba(53,73,120,0.10);
+  --radius-xl:28px;
+  --radius-lg:20px;
+  --radius-md:14px;
+  --sans:"Calibri","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;min-height:100%;}
+body{
+  font-family:var(--sans);
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 16% 10%, var(--glow-a), transparent 28%),
+    radial-gradient(circle at 88% 14%, var(--glow-b), transparent 24%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+  -webkit-font-smoothing:antialiased;
+}
+body.widget-mode{
+  background:transparent;
+  overflow:hidden;
+}
+button,input{
+  font:inherit;
+}
+button{
+  border:0;
+  background:none;
+  cursor:pointer;
+}
+input{
+  border:0;
+  outline:none;
+  min-width:0;
+}
+.hidden{display:none !important;}
+.shell{
+  min-height:100vh;
+  padding:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+body.widget-mode .shell{
+  padding:0;
+  width:100vw;
+  height:100vh;
+}
+.bubble{
+  width:min(100%, 460px);
+  min-height:520px;
+  padding:18px;
+  border-radius:34px 34px 30px 38px;
+  background:
+    radial-gradient(circle at 22% 12%, rgba(255,255,255,0.96), rgba(255,255,255,0.52) 24%, transparent 26%),
+    linear-gradient(155deg, rgba(255,255,255,0.92), var(--bubble-mid) 42%, var(--bubble-base) 100%);
+  border:1px solid rgba(255,255,255,0.78);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  position:relative;
+  overflow:hidden;
+}
+body.widget-mode .bubble{
+  width:100%;
+  height:100%;
+  min-height:0;
+}
+body.widget-mode.peek .bubble{
+  opacity:0.82;
+  box-shadow:var(--shadow-soft);
+}
+.bubble::after{
+  content:"";
+  position:absolute;
+  inset:auto -26px -36px auto;
+  width:168px;
+  height:168px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,255,255,0.54), rgba(255,255,255,0));
+  pointer-events:none;
+}
+.topbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  -webkit-app-region:drag;
+}
+.title-wrap{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.title-input{
+  width:100%;
+  padding:0;
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:-0.03em;
+  color:var(--ink);
+  background:transparent;
+  -webkit-app-region:no-drag;
+}
+.title-input::placeholder{color:var(--ink-faint);}
+.profile-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  -webkit-app-region:no-drag;
+  flex-wrap:nowrap;
+}
+.profile-select{
+  flex:1 1 0;
+  min-width:0;
+  padding:7px 28px 7px 12px;
+  border:1px solid rgba(255,255,255,0.62);
+  border-radius:999px;
+  background:var(--surface-soft);
+  color:var(--ink-soft);
+  appearance:none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-faint) 50%),
+    linear-gradient(135deg, var(--ink-faint) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% - 2px),
+    calc(100% - 11px) calc(50% - 2px);
+  background-size:5px 5px, 5px 5px;
+  background-repeat:no-repeat;
+}
+.profile-rename-input{
+  flex:1 1 0;
+  min-width:0;
+  padding:7px 12px;
+  border:1px solid rgba(255,255,255,0.62);
+  border-radius:999px;
+  background:var(--surface-soft);
+  color:var(--ink-soft);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.34);
+}
+.profile-rename-input:focus{
+  outline:none;
+  border-color:rgba(79,124,255,0.36);
+}
+.theme-select{
+  flex:1 1 0;
+  min-width:0;
+  padding:7px 28px 7px 12px;
+  border:1px solid rgba(255,255,255,0.62);
+  border-radius:999px;
+  background:var(--surface-soft);
+  color:var(--ink-soft);
+  appearance:none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-faint) 50%),
+    linear-gradient(135deg, var(--ink-faint) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% - 2px),
+    calc(100% - 11px) calc(50% - 2px);
+  background-size:5px 5px, 5px 5px;
+  background-repeat:no-repeat;
+}
+.profile-add-btn{
+  width:34px;
+  height:34px;
+  flex:0 0 34px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.34);
+  color:var(--ink-soft);
+  font-size:20px;
+  line-height:1;
+  font-weight:500;
+  transition:background .18s ease,color .18s ease;
+}
+.profile-add-btn:hover{
+  background:rgba(255,255,255,0.76);
+  color:var(--ink);
+}
+.window-actions{
+  display:flex;
+  gap:8px;
+  -webkit-app-region:no-drag;
+}
+.ghost-btn{
+  width:30px;
+  height:30px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.34);
+  color:rgba(34,48,77,0.66);
+  transition:background .18s ease,color .18s ease,transform .18s ease;
+}
+.ghost-btn:hover{
+  background:rgba(255,255,255,0.76);
+  color:var(--ink);
+  transform:translateY(-1px);
+}
+.quick-add{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:16px;
+  background:rgba(255,255,255,0.42);
+  border:1px solid rgba(255,255,255,0.58);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.28);
+}
+.add-input{
+  flex:1;
+  padding:2px 0;
+  font-size:14px;
+  color:var(--ink);
+  background:transparent;
+}
+.add-input::placeholder{color:var(--ink-faint);}
+.primary-btn{
+  padding:7px 12px;
+  border-radius:999px;
+  background:linear-gradient(180deg, #6b92ff, #4f7cff);
+  color:#fff;
+  font-weight:700;
+  font-size:13px;
+  box-shadow:0 6px 16px rgba(79,124,255,0.22);
+}
+.meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-size:12px;
+  color:var(--ink-faint);
+}
+.meta strong{
+  color:var(--ink-soft);
+}
+.list-shell{
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.section-foot{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding-top:4px;
+}
+.archive-btn{
+  padding:10px 16px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.52);
+  color:var(--ink-soft);
+  border:1px solid rgba(255,255,255,0.7);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.34);
+  font-weight:700;
+  transition:background .18s ease,color .18s ease,transform .18s ease;
+}
+.archive-btn:hover{
+  background:rgba(255,255,255,0.82);
+  color:var(--ink);
+  transform:translateY(-1px);
+}
+.archive-status{
+  flex:1;
+  min-width:0;
+  font-size:12px;
+  color:var(--ink-faint);
+  text-align:right;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.section{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height:0;
+}
+.section-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.section-title{
+  margin:0;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-faint);
+}
+.section-title-input{
+  width:100%;
+  max-width:180px;
+  padding:0;
+  background:transparent;
+  color:var(--ink-faint);
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.stack{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height:0;
+}
+.stack.scrollable{
+  overflow:auto;
+  padding-right:4px;
+}
+.todo-row{
+  --depth:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:11px;
+  background:rgba(255,255,255,0.78);
+  border:1px solid rgba(222,232,248,0.92);
+  box-shadow:0 6px 16px rgba(83,109,166,0.08);
+}
+.todo-row.drag-over{
+  outline:2px solid rgba(79,124,255,0.28);
+}
+.check-btn,
+.mini-btn,
+.drag-handle{
+  flex:0 0 auto;
+  width:24px;
+  height:24px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.42);
+  color:var(--ink-soft);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.check-btn{
+  font-size:15px;
+  line-height:1;
+}
+.check-btn.is-active{
+  color:#e39aa7;
+}
+.check-btn.is-done{
+  background:rgba(47,157,116,0.18);
+  color:var(--today);
+}
+.drag-handle{
+  cursor:grab;
+}
+.tree-indent{
+  flex:0 0 auto;
+  min-width:calc(var(--depth) * 14px);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:0;
+}
+.tree-guide{
+  position:relative;
+  width:14px;
+  height:24px;
+  flex:0 0 14px;
+}
+.tree-guide::before{
+  content:'';
+  position:absolute;
+  left:6px;
+  top:-2px;
+  bottom:-2px;
+  width:2px;
+  background:rgba(162,179,211,0.44);
+}
+.tree-guide.is-branch::before{
+  top:0;
+  height:50%;
+  bottom:auto;
+}
+.tree-guide.is-branch::after{
+  content:'';
+  position:absolute;
+  left:6px;
+  top:50%;
+  width:9px;
+  height:2px;
+  background:rgba(162,179,211,0.52);
+}
+.row-body{
+  flex:1;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.task-input{
+  flex:1;
+  min-width:0;
+  padding:0;
+  background:transparent;
+  font-size:15px;
+  line-height:1.2;
+  color:var(--ink);
+}
+.task-input:focus{
+  outline:none;
+}
+.task-input.is-done{
+  color:var(--ink-faint);
+  text-decoration:line-through;
+}
+.priority-toggle{
+  flex:0 0 auto;
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.48);
+  color:var(--ink-soft);
+  font-size:12px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background .18s ease,color .18s ease;
+}
+.priority-toggle:hover{
+  background:rgba(255,255,255,0.82);
+  color:var(--ink);
+}
+.priority-toggle.is-priority{
+  background:var(--accent-soft);
+  color:var(--accent);
+}
+.danger-btn{
+  width:24px;
+  height:24px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.34);
+  color:rgba(204,94,115,0.74);
+}
+.danger-btn:hover{
+  background:rgba(255,255,255,0.74);
+  color:var(--danger);
+}
+.empty{
+  padding:18px 16px;
+  border-radius:20px;
+  background:rgba(255,255,255,0.42);
+  border:1px dashed var(--line-strong);
+}
+.empty-input{
+  width:100%;
+  padding:0;
+  background:transparent;
+  color:var(--ink-faint);
+  font-size:14px;
+  line-height:1.45;
+}
+.bubble-pill{
+  width:100%;
+  height:100%;
+  padding:0;
+  border-radius:18px;
+  background:
+    radial-gradient(circle at 22% 16%, rgba(255,255,255,0.96), rgba(255,255,255,0.44) 24%, transparent 26%),
+    linear-gradient(150deg, rgba(255,255,255,0.92), var(--compact-mid) 48%, var(--compact-base));
+  border:1px solid rgba(255,255,255,0.84);
+  box-shadow:var(--shadow-soft);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0;
+  overflow:hidden;
+  -webkit-app-region:drag;
+}
+.bubble-pill-copy{
+  display:none;
+  flex-direction:column;
+  gap:1px;
+  align-items:flex-start;
+}
+.bubble-pill-label{
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink-faint);
+}
+.bubble-pill-count{
+  font-size:24px;
+  font-weight:700;
+  color:var(--ink);
+  line-height:1;
+  -webkit-app-region:no-drag;
+  cursor:pointer;
+  user-select:none;
+}
+.bubble-pill-sub{
+  font-size:12px;
+  color:var(--ink-soft);
+}
+body.widget-mode.compact .bubble,
+body.widget-mode.compact .shell > .quick-open{
+  display:none;
+}
+.compact-shell{
+  display:none;
+  width:100vw;
+  height:100vh;
+  padding:0;
+}
+body.widget-mode.compact .compact-shell{
+  display:block;
+}
+body.widget-mode.peek .completed-section,
+body.widget-mode.peek .section-foot{
+  display:none;
+}
+body.widget-mode.peek .todo-row{
+  opacity:.58;
+}
+body.widget-mode.peek .stack.scrollable{
+  overflow:hidden;
+}
+body.widget-mode.peek .bubble{
+  gap:12px;
+}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{
+  border-radius:999px;
+  background:rgba(99,114,145,0.22);
+}
+@media (max-width:520px){
+  .shell{padding:14px;}
+  .bubble{padding:15px;min-height:0;}
+  .topbar{align-items:flex-start;}
+  .profile-row{flex-wrap:wrap;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <section class="bubble" id="bubbleCard">
+    <div class="topbar">
+      <div class="title-wrap">
+        <input id="titleInput" class="title-input" autocomplete="off" />
+        <div class="profile-row">
+          <select id="profileSelect" class="profile-select" title="Switch user"></select>
+          <input id="profileRenameInput" class="profile-rename-input hidden" type="text" autocomplete="off" />
+          <button id="addProfileBtn" class="profile-add-btn" type="button" title="Add user">+</button>
+          <select id="themeSelect" class="theme-select" title="Switch color"></select>
+        </div>
+      </div>
+      <div class="window-actions">
+        <button id="openMainBtn" class="ghost-btn hidden" type="button" title="Open panel">⤢</button>
+        <button id="compactBtn" class="ghost-btn hidden" type="button" title="Collapse">−</button>
+        <button id="quitBtn" class="ghost-btn hidden" type="button" title="Quit">×</button>
+      </div>
+    </div>
+
+    <div class="quick-add">
+      <input id="newTaskInput" class="add-input" autocomplete="off" />
+      <button id="addTaskBtn" class="primary-btn" type="button">Add</button>
+    </div>
+
+    <div class="meta">
+      <span><strong id="activeCount">0</strong> active</span>
+      <span><strong id="todayCount">0</strong> priority</span>
+    </div>
+
+    <div class="list-shell">
+      <section class="section">
+        <div class="section-head">
+          <h2 class="section-title">Active</h2>
+        </div>
+        <div id="activeStack" class="stack scrollable active-stack"></div>
+        <div id="emptyState" class="empty hidden">
+          <input id="emptyInput" class="empty-input" autocomplete="off" />
+        </div>
+      </section>
+
+      <section id="completedSection" class="section completed-section hidden">
+        <div class="section-head">
+          <input id="completedInput" class="section-title-input" autocomplete="off" />
+        </div>
+        <div id="completedStack" class="stack scrollable"></div>
+      </section>
+    </div>
+
+    <div class="section-foot">
+      <button id="archiveBtn" class="archive-btn" type="button">Archive</button>
+      <div id="archiveStatus" class="archive-status">Archive to Documents</div>
+    </div>
+  </section>
+
+  <div id="compactShell" class="compact-shell">
+    <div id="compactBubbleBtn" class="bubble-pill" aria-label="Compact Today Bubble">
+      <div class="bubble-pill-copy">
+        <span class="bubble-pill-label" id="compactLabel">Today</span>
+        <span class="bubble-pill-sub">Todo</span>
+      </div>
+      <span class="bubble-pill-count" id="compactCount" role="button" tabindex="0" title="Open Today Bubble">0</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const desktopApi = window.todayBubbleDesktop || null;
+  const isWidgetMode = new URLSearchParams(location.search).get('widget') === '1';
+  const state = {
+    profiles: [{
+      id: 'default-user',
+      name: 'DailyToDo',
+      labels: {
+        title: 'Today Bubble',
+        inputPlaceholder: 'Add a task',
+        emptyState: 'No tasks yet. Add your first bubble above.',
+        completedTitle: 'Completed'
+      },
+      items: []
+    }],
+    activeProfileId: 'default-user',
+    widgetBounds: null,
+    mainBounds: null
+  };
+
+  const titleInput = document.getElementById('titleInput');
+  const profileSelect = document.getElementById('profileSelect');
+  const profileRenameInput = document.getElementById('profileRenameInput');
+  const themeSelect = document.getElementById('themeSelect');
+  const addProfileBtn = document.getElementById('addProfileBtn');
+  const newTaskInput = document.getElementById('newTaskInput');
+  const addTaskBtn = document.getElementById('addTaskBtn');
+  const activeCount = document.getElementById('activeCount');
+  const todayCount = document.getElementById('todayCount');
+  const activeStack = document.getElementById('activeStack');
+  const completedStack = document.getElementById('completedStack');
+  const completedSection = document.getElementById('completedSection');
+  const completedInput = document.getElementById('completedInput');
+  const emptyState = document.getElementById('emptyState');
+  const emptyInput = document.getElementById('emptyInput');
+  const compactBtn = document.getElementById('compactBtn');
+  const openMainBtn = document.getElementById('openMainBtn');
+  const quitBtn = document.getElementById('quitBtn');
+  const compactBubbleBtn = document.getElementById('compactBubbleBtn');
+  const compactLabel = document.getElementById('compactLabel');
+  const compactCount = document.getElementById('compactCount');
+  const archiveBtn = document.getElementById('archiveBtn');
+  const archiveStatus = document.getElementById('archiveStatus');
+
+  let dragSourceId = null;
+  let compactMode = false;
+  let archiveTimer = null;
+  let pendingFocusId = null;
+  let pendingCaretToEnd = false;
+  let pendingRenameProfileId = null;
+  const THEMES = {
+    'airy-blue': {
+      label: 'Airy Blue',
+      vars: {
+        '--bg-top': '#f8fbff',
+        '--bg-bottom': '#edf4ff',
+        '--glow-a': 'rgba(255,255,255,0.96)',
+        '--glow-b': 'rgba(197,223,255,0.58)',
+        '--accent': '#4f7cff',
+        '--accent-soft': 'rgba(79,124,255,0.12)',
+        '--bubble-mid': 'rgba(236,244,255,0.78)',
+        '--bubble-base': 'rgba(225,238,255,0.90)',
+        '--compact-mid': 'rgba(225,239,255,0.86)',
+        '--compact-base': 'rgba(209,227,255,0.94)'
+      }
+    },
+    'peach-cream': {
+      label: 'Peach Cream',
+      vars: {
+        '--bg-top': '#fffaf4',
+        '--bg-bottom': '#ffeedd',
+        '--glow-a': 'rgba(255,255,255,0.96)',
+        '--glow-b': 'rgba(255,214,186,0.58)',
+        '--accent': '#ff9a62',
+        '--accent-soft': 'rgba(255,154,98,0.14)',
+        '--bubble-mid': 'rgba(255,240,224,0.82)',
+        '--bubble-base': 'rgba(255,229,208,0.92)',
+        '--compact-mid': 'rgba(255,233,214,0.88)',
+        '--compact-base': 'rgba(255,221,197,0.95)'
+      }
+    },
+    'sage-mist': {
+      label: 'Sage Mist',
+      vars: {
+        '--bg-top': '#f7fbf8',
+        '--bg-bottom': '#e6f2eb',
+        '--glow-a': 'rgba(255,255,255,0.95)',
+        '--glow-b': 'rgba(199,226,210,0.56)',
+        '--accent': '#4d9e7f',
+        '--accent-soft': 'rgba(77,158,127,0.14)',
+        '--bubble-mid': 'rgba(236,246,240,0.80)',
+        '--bubble-base': 'rgba(225,239,231,0.92)',
+        '--compact-mid': 'rgba(223,239,230,0.88)',
+        '--compact-base': 'rgba(210,231,220,0.95)'
+      }
+    },
+    'sunset-milk': {
+      label: 'Sunset Milk',
+      vars: {
+        '--bg-top': '#fffaf7',
+        '--bg-bottom': '#ffe6df',
+        '--glow-a': 'rgba(255,255,255,0.95)',
+        '--glow-b': 'rgba(255,204,193,0.52)',
+        '--accent': '#ef7f88',
+        '--accent-soft': 'rgba(239,127,136,0.14)',
+        '--bubble-mid': 'rgba(255,240,237,0.82)',
+        '--bubble-base': 'rgba(255,228,223,0.92)',
+        '--compact-mid': 'rgba(255,229,223,0.88)',
+        '--compact-base': 'rgba(255,216,209,0.95)'
+      }
+    },
+    'soft-lilac': {
+      label: 'Soft Lilac',
+      vars: {
+        '--bg-top': '#fcf8ff',
+        '--bg-bottom': '#efe6fb',
+        '--glow-a': 'rgba(255,255,255,0.96)',
+        '--glow-b': 'rgba(222,208,248,0.58)',
+        '--accent': '#a07be8',
+        '--accent-soft': 'rgba(160,123,232,0.14)',
+        '--bubble-mid': 'rgba(245,239,255,0.82)',
+        '--bubble-base': 'rgba(236,229,250,0.92)',
+        '--compact-mid': 'rgba(233,225,248,0.88)',
+        '--compact-base': 'rgba(225,216,244,0.95)'
+      }
+    },
+    'soft-mint': {
+      label: 'Soft Mint',
+      vars: {
+        '--bg-top': '#f7fbf8',
+        '--bg-bottom': '#e6f2eb',
+        '--glow-a': 'rgba(255,255,255,0.95)',
+        '--glow-b': 'rgba(199,226,210,0.56)',
+        '--accent': '#4d9e7f',
+        '--accent-soft': 'rgba(77,158,127,0.14)',
+        '--bubble-mid': 'rgba(236,246,240,0.80)',
+        '--bubble-base': 'rgba(225,239,231,0.92)',
+        '--compact-mid': 'rgba(223,239,230,0.88)',
+        '--compact-base': 'rgba(210,231,220,0.95)'
+      }
+    },
+    'soft-butter': {
+      label: 'Soft Butter',
+      vars: {
+        '--bg-top': '#fffdf4',
+        '--bg-bottom': '#f7efcc',
+        '--glow-a': 'rgba(255,255,255,0.95)',
+        '--glow-b': 'rgba(245,228,154,0.52)',
+        '--accent': '#d0ac42',
+        '--accent-soft': 'rgba(208,172,66,0.15)',
+        '--bubble-mid': 'rgba(255,248,226,0.84)',
+        '--bubble-base': 'rgba(247,239,204,0.94)',
+        '--compact-mid': 'rgba(244,236,194,0.90)',
+        '--compact-base': 'rgba(238,229,181,0.95)'
+      }
+    },
+    'soft-mist': {
+      label: 'Soft Gray',
+      vars: {
+        '--bg-top': '#fbfbfc',
+        '--bg-bottom': '#eceef2',
+        '--glow-a': 'rgba(255,255,255,0.95)',
+        '--glow-b': 'rgba(216,222,231,0.5)',
+        '--accent': '#8b97aa',
+        '--accent-soft': 'rgba(139,151,170,0.14)',
+        '--bubble-mid': 'rgba(243,245,248,0.84)',
+        '--bubble-base': 'rgba(232,236,241,0.94)',
+        '--compact-mid': 'rgba(228,233,239,0.90)',
+        '--compact-base': 'rgba(220,226,233,0.95)'
+      }
+    }
+  };
+
+  function uid() {
+    return `tb_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
+  }
+
+  function normalizeLabels(labels) {
+    const source = labels && typeof labels === 'object' ? labels : {};
+    return {
+      title: String(source.title || 'Today Bubble').trim() || 'Today Bubble',
+      inputPlaceholder: String(source.inputPlaceholder || 'Add a task').trim() || 'Add a task',
+      emptyState: String(source.emptyState || 'No tasks yet. Add your first bubble above.').trim() || 'No tasks yet. Add your first bubble above.',
+      completedTitle: String(source.completedTitle || 'Completed').trim() || 'Completed'
+    };
+  }
+
+  function normalizeProfile(profile, fallbackName = 'DailyToDo') {
+    const source = profile && typeof profile === 'object' ? profile : {};
+    const themeId = Object.prototype.hasOwnProperty.call(THEMES, source.themeId) ? source.themeId : 'airy-blue';
+    const rawName = String(source.name || fallbackName).trim() || fallbackName;
+    const name = source.id === 'default-user' && rawName === 'Default User' ? 'DailyToDo' : rawName;
+    return {
+      id: String(source.id || uid()),
+      name,
+      themeId,
+      labels: normalizeLabels(source.labels),
+      items: Array.isArray(source.items) ? source.items.map(normalizeItem).filter(Boolean) : []
+    };
+  }
+
+  function normalizeProfiles(profiles) {
+    if (!Array.isArray(profiles) || !profiles.length) {
+      return [normalizeProfile(null)];
+    }
+    return profiles.map((profile, index) => normalizeProfile(profile, `User ${index + 1}`));
+  }
+
+  function migrateLegacyProfileNames(profiles) {
+    let changed = false;
+    const nextProfiles = profiles.map((profile, index) => {
+      if (!profile) return profile;
+      const isPrimaryProfile = index === 0 || profile.id === 'default-user';
+      if (isPrimaryProfile && profile.name === 'Default User') {
+        changed = true;
+        return { ...profile, name: 'DailyToDo' };
+      }
+      return profile;
+    });
+    return { profiles: nextProfiles, changed };
+  }
+
+  function normalizeItem(item, index = 0) {
+    if (!item || typeof item !== 'object') return null;
+    const text = String(item.text || '').trim();
+    if (!text) return null;
+    return {
+      id: String(item.id || uid()),
+      text,
+      completed: Boolean(item.completed),
+      today: Boolean(item.today),
+      priority: item.priority === 'high' ? 'high' : 'normal',
+      depth: Number.isFinite(item.depth) ? Math.max(0, Math.min(6, Math.round(item.depth))) : 0,
+      order: Number.isFinite(item.order) ? item.order : index,
+      createdAt: Number.isFinite(item.createdAt) ? item.createdAt : Date.now(),
+      updatedAt: Number.isFinite(item.updatedAt) ? item.updatedAt : Date.now()
+    };
+  }
+
+  function normalizeState(nextState) {
+    const source = nextState && typeof nextState === 'object' ? nextState : {};
+    let profiles = [];
+    let activeProfileId = '';
+
+    if (Array.isArray(source.profiles) && source.profiles.length) {
+      profiles = normalizeProfiles(source.profiles);
+      activeProfileId = String(source.activeProfileId || '').trim();
+    } else if (source.labels || source.items) {
+      const migrated = normalizeProfile({
+        id: source.activeProfileId || uid(),
+        name: source.activeProfileName || 'DailyToDo',
+        labels: source.labels,
+        items: source.items
+      });
+      profiles = [migrated];
+      activeProfileId = migrated.id;
+    } else {
+      profiles = normalizeProfiles([]);
+      activeProfileId = profiles[0].id;
+    }
+
+    if (!profiles.some((profile) => profile.id === activeProfileId)) {
+      activeProfileId = profiles[0].id;
+    }
+
+    const migratedProfiles = migrateLegacyProfileNames(profiles);
+
+    return {
+      profiles: migratedProfiles.profiles,
+      activeProfileId,
+      widgetBounds: source.widgetBounds || null,
+      mainBounds: source.mainBounds || null,
+      needsSave: migratedProfiles.changed
+    };
+  }
+
+  function activeProfile() {
+    return state.profiles.find((profile) => profile.id === state.activeProfileId) || state.profiles[0];
+  }
+
+  async function persistState() {
+    if (desktopApi && typeof desktopApi.saveState === 'function') {
+      await desktopApi.saveState(state);
+    } else {
+      localStorage.setItem('todayBubbleState_v1', JSON.stringify(state));
+    }
+  }
+
+  function setArchiveStatus(message, tone = 'muted') {
+    archiveStatus.textContent = message;
+    archiveStatus.style.color = tone === 'error'
+      ? 'var(--danger)'
+      : tone === 'success'
+        ? 'var(--today)'
+        : 'var(--ink-faint)';
+    if (archiveTimer) {
+      clearTimeout(archiveTimer);
+      archiveTimer = null;
+    }
+    if (tone !== 'muted') {
+      archiveTimer = setTimeout(() => {
+        archiveStatus.textContent = 'Archive to Documents';
+        archiveStatus.style.color = 'var(--ink-faint)';
+      }, 2600);
+    }
+  }
+
+  function loadFallbackState() {
+    try {
+      const raw = localStorage.getItem('todayBubbleState_v1');
+      return raw ? normalizeState(JSON.parse(raw)) : normalizeState(null);
+    } catch {
+      return normalizeState(null);
+    }
+  }
+
+  function sortItems(items) {
+    return [...items].sort((a, b) => {
+      if (a.completed !== b.completed) {
+        return a.completed ? 1 : -1;
+      }
+      return a.order - b.order || a.createdAt - b.createdAt;
+    });
+  }
+
+  function activeItems() {
+    return sortItems(activeProfile().items.filter((item) => !item.completed));
+  }
+
+  function maxOrder() {
+    return activeProfile().items.reduce((max, item) => Math.max(max, item.order), -1);
+  }
+
+  function setCompactMode(nextCompact) {
+    compactMode = nextCompact;
+    document.body.classList.toggle('compact', nextCompact);
+    if (desktopApi && typeof desktopApi.setWidgetMode === 'function' && isWidgetMode) {
+      desktopApi.setWidgetMode(nextCompact ? 'compact' : 'expanded');
+    }
+  }
+
+  function clearPeek() {
+    if (isWidgetMode && !compactMode) {
+      document.body.classList.remove('peek');
+    }
+  }
+
+  function updateLabelState() {
+    const profile = activeProfile();
+    profile.labels.title = titleInput.value.trim() || 'Today Bubble';
+    profile.labels.inputPlaceholder = profile.labels.inputPlaceholder || 'Add a task';
+    profile.labels.emptyState = emptyInput.value.trim() || 'No tasks yet. Add your first bubble above.';
+    profile.labels.completedTitle = completedInput.value.trim() || 'Completed';
+    syncLabelInputs();
+  }
+
+  function syncLabelInputs() {
+    const profile = activeProfile();
+    titleInput.value = profile.labels.title;
+    completedInput.value = profile.labels.completedTitle;
+    emptyInput.value = profile.labels.emptyState;
+    newTaskInput.placeholder = profile.labels.inputPlaceholder;
+    compactLabel.textContent = profile.labels.title.split(/\s+/)[0] || 'Today';
+  }
+
+  function syncProfileSelect() {
+    const currentId = state.activeProfileId;
+    const renamingProfile = state.profiles.find((profile) => profile.id === pendingRenameProfileId) || null;
+    profileSelect.innerHTML = '';
+    state.profiles.forEach((profile) => {
+      const option = document.createElement('option');
+      option.value = profile.id;
+      option.textContent = profile.name;
+      profileSelect.appendChild(option);
+    });
+    profileSelect.value = currentId;
+    if (renamingProfile) {
+      profileSelect.classList.add('hidden');
+      profileRenameInput.classList.remove('hidden');
+      profileRenameInput.value = renamingProfile.name;
+    } else {
+      profileRenameInput.classList.add('hidden');
+      profileSelect.classList.remove('hidden');
+    }
+    themeSelect.innerHTML = '';
+    Object.entries(THEMES).forEach(([themeId, theme]) => {
+      const option = document.createElement('option');
+      option.value = themeId;
+      option.textContent = theme.label;
+      themeSelect.appendChild(option);
+    });
+    themeSelect.value = activeProfile().themeId;
+  }
+
+  function applyTheme(themeId) {
+    const theme = THEMES[themeId] || THEMES['airy-blue'];
+    Object.entries(theme.vars).forEach(([key, value]) => {
+      document.documentElement.style.setProperty(key, value);
+    });
+  }
+
+  function renderCounts() {
+    const active = activeItems();
+    const priority = active.filter((item) => item.priority === 'high').length;
+    activeCount.textContent = String(active.length);
+    todayCount.textContent = String(priority);
+    compactCount.textContent = String(active.length);
+  }
+
+  function createRow(item) {
+    const row = document.createElement('div');
+    row.className = 'todo-row';
+    row.dataset.id = item.id;
+    row.style.setProperty('--depth', String(item.depth));
+
+    const dragHandle = item.completed ? '' : '<button class="drag-handle" type="button" draggable="true" title="Drag to reorder">⋮⋮</button>';
+    const treeIndent = item.depth
+      ? `<div class="tree-indent" aria-hidden="true">${Array.from({ length: item.depth }, (_, index) => `<span class="tree-guide ${index === item.depth - 1 ? 'is-branch' : ''}"></span>`).join('')}</div>`
+      : '';
+    row.innerHTML = `
+      ${treeIndent}
+      <button class="check-btn ${item.completed ? 'is-done' : 'is-active'}" type="button" title="${item.completed ? 'Mark active' : 'Mark complete'}">${item.completed ? '✓' : '🏃'}</button>
+      ${dragHandle}
+      <div class="row-body">
+        <input class="task-input ${item.completed ? 'is-done' : ''}" value="" autocomplete="off" />
+        <button class="priority-toggle ${item.priority === 'high' ? 'is-priority' : ''}" type="button" title="Priority">${item.priority === 'high' ? '↑' : '↗'}</button>
+      </div>
+      <button class="danger-btn" type="button" title="Delete">×</button>
+    `;
+
+    const textInput = row.querySelector('.task-input');
+    const checkBtn = row.querySelector('.check-btn');
+    const priorityBtn = row.querySelector('.priority-toggle');
+    const deleteBtn = row.querySelector('.danger-btn');
+    const dragBtn = row.querySelector('.drag-handle');
+
+    textInput.value = item.text;
+    textInput.addEventListener('input', () => {
+      item.text = textInput.value;
+    });
+    textInput.addEventListener('keydown', async (event) => {
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        item.depth = Math.max(0, Math.min(6, item.depth + (event.shiftKey ? -1 : 1)));
+        item.updatedAt = Date.now();
+        pendingFocusId = item.id;
+        pendingCaretToEnd = true;
+        await persistState();
+        renderAll();
+      }
+    });
+    textInput.addEventListener('blur', async () => {
+      const trimmed = textInput.value.trim();
+      if (!trimmed) {
+        activeProfile().items = activeProfile().items.filter((entry) => entry.id !== item.id);
+      } else {
+        item.text = trimmed;
+        item.updatedAt = Date.now();
+      }
+      await persistState();
+      renderAll();
+    });
+
+    checkBtn.addEventListener('click', async () => {
+      item.completed = !item.completed;
+      item.updatedAt = Date.now();
+      await persistState();
+      renderAll();
+    });
+
+    priorityBtn.addEventListener('click', async () => {
+      item.priority = item.priority === 'high' ? 'normal' : 'high';
+      item.updatedAt = Date.now();
+      await persistState();
+      renderAll();
+    });
+
+    deleteBtn.addEventListener('click', async () => {
+      activeProfile().items = activeProfile().items.filter((entry) => entry.id !== item.id);
+      await persistState();
+      renderAll();
+    });
+
+    if (dragBtn) {
+      dragBtn.addEventListener('dragstart', (event) => {
+        dragSourceId = item.id;
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', item.id);
+      });
+      row.addEventListener('dragover', (event) => {
+        if (!dragSourceId || dragSourceId === item.id) return;
+        event.preventDefault();
+        row.classList.add('drag-over');
+      });
+      row.addEventListener('dragleave', () => {
+        row.classList.remove('drag-over');
+      });
+      row.addEventListener('drop', async (event) => {
+        if (!dragSourceId || dragSourceId === item.id) return;
+        event.preventDefault();
+        row.classList.remove('drag-over');
+        reorderActiveItems(dragSourceId, item.id);
+        dragSourceId = null;
+        await persistState();
+        renderAll();
+      });
+      row.addEventListener('dragend', () => {
+        dragSourceId = null;
+        document.querySelectorAll('.drag-over').forEach((element) => element.classList.remove('drag-over'));
+      });
+    }
+
+    return row;
+  }
+
+  function reorderActiveItems(sourceId, targetId) {
+    const active = activeItems();
+    const fromIndex = active.findIndex((item) => item.id === sourceId);
+    const toIndex = active.findIndex((item) => item.id === targetId);
+    if (fromIndex === -1 || toIndex === -1) return;
+    const [moved] = active.splice(fromIndex, 1);
+    active.splice(toIndex, 0, moved);
+    active.forEach((item, index) => {
+      item.order = index;
+      item.updatedAt = Date.now();
+    });
+  }
+
+  function renderLists() {
+    const items = sortItems(activeProfile().items);
+
+    activeStack.innerHTML = '';
+
+    if (items.length === 0) {
+      emptyState.classList.remove('hidden');
+      emptyInput.value = activeProfile().labels.emptyState;
+    } else {
+      emptyState.classList.add('hidden');
+    }
+
+    items.forEach((item) => {
+      activeStack.appendChild(createRow(item));
+    });
+    completedSection.classList.add('hidden');
+    completedStack.innerHTML = '';
+  }
+
+  function renderAll() {
+    syncProfileSelect();
+    syncLabelInputs();
+    applyTheme(activeProfile().themeId);
+    renderCounts();
+    renderLists();
+    if (pendingRenameProfileId && !profileRenameInput.classList.contains('hidden')) {
+      profileRenameInput.focus();
+      profileRenameInput.select();
+      return;
+    }
+    if (pendingFocusId) {
+      const target = activeStack.querySelector(`[data-id="${pendingFocusId}"] .task-input`)
+        || completedStack.querySelector(`[data-id="${pendingFocusId}"] .task-input`);
+      if (target) {
+        target.focus();
+        if (pendingCaretToEnd) {
+          const end = target.value.length;
+          target.setSelectionRange(end, end);
+        }
+      }
+      pendingFocusId = null;
+      pendingCaretToEnd = false;
+    }
+  }
+
+  async function saveLabels() {
+    updateLabelState();
+    await persistState();
+    renderAll();
+  }
+
+  async function addTask() {
+    const text = newTaskInput.value.trim();
+    if (!text) {
+      newTaskInput.focus();
+      return;
+    }
+    activeProfile().items.push({
+      id: uid(),
+      text,
+      completed: false,
+      today: true,
+      priority: 'normal',
+      depth: 0,
+      order: maxOrder() + 1,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+    newTaskInput.value = '';
+    await persistState();
+    renderAll();
+    newTaskInput.focus();
+  }
+
+  async function addProfile() {
+    const nextIndex = state.profiles.length + 1;
+    const name = `User ${nextIndex}`;
+    const profile = normalizeProfile({ id: uid(), name }, name);
+    state.profiles.push(profile);
+    state.activeProfileId = profile.id;
+    pendingRenameProfileId = profile.id;
+    await persistState();
+    renderAll();
+  }
+
+  async function commitProfileRename() {
+    if (!pendingRenameProfileId) return;
+    const profile = state.profiles.find((entry) => entry.id === pendingRenameProfileId);
+    if (!profile) {
+      pendingRenameProfileId = null;
+      renderAll();
+      return;
+    }
+    const nextName = profileRenameInput.value.trim() || profile.name;
+    profile.name = nextName;
+    pendingRenameProfileId = null;
+    await persistState();
+    renderAll();
+  }
+
+  async function switchProfile(nextProfileId) {
+    if (!state.profiles.some((profile) => profile.id === nextProfileId)) return;
+    updateLabelState();
+    state.activeProfileId = nextProfileId;
+    await persistState();
+    renderAll();
+    newTaskInput.focus();
+  }
+
+  async function switchTheme(nextThemeId) {
+    const profile = activeProfile();
+    profile.themeId = Object.prototype.hasOwnProperty.call(THEMES, nextThemeId) ? nextThemeId : 'airy-blue';
+    applyTheme(profile.themeId);
+    await persistState();
+    renderAll();
+  }
+
+  async function archiveCurrentList() {
+    if (!activeProfile().items.length) {
+      setArchiveStatus('Nothing to archive yet.', 'error');
+      return;
+    }
+    updateLabelState();
+    await persistState();
+    archiveBtn.disabled = true;
+    archiveBtn.textContent = 'Archiving...';
+    try {
+      if (desktopApi && typeof desktopApi.archiveCurrentList === 'function') {
+        const result = await desktopApi.archiveCurrentList(state);
+        setArchiveStatus(`Saved ${result.fileName}`, 'success');
+      } else {
+        throw new Error('Archive is only available in the desktop app.');
+      }
+    } catch (error) {
+      setArchiveStatus(error && error.message ? error.message : 'Archive failed.', 'error');
+    } finally {
+      archiveBtn.disabled = false;
+      archiveBtn.textContent = 'Archive';
+    }
+  }
+
+  titleInput.addEventListener('blur', saveLabels);
+  profileSelect.addEventListener('change', () => {
+    switchProfile(profileSelect.value);
+  });
+  profileRenameInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      commitProfileRename();
+    } else if (event.key === 'Escape') {
+      pendingRenameProfileId = null;
+      renderAll();
+    }
+  });
+  profileRenameInput.addEventListener('blur', () => {
+    commitProfileRename();
+  });
+  themeSelect.addEventListener('change', () => {
+    switchTheme(themeSelect.value);
+  });
+  addProfileBtn.addEventListener('click', addProfile);
+  emptyInput.addEventListener('blur', saveLabels);
+  completedInput.addEventListener('blur', saveLabels);
+  addTaskBtn.addEventListener('click', addTask);
+  archiveBtn.addEventListener('click', archiveCurrentList);
+  newTaskInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      addTask();
+    }
+  });
+
+  compactBtn.addEventListener('click', () => {
+    document.body.classList.remove('peek');
+    setCompactMode(true);
+  });
+
+  compactCount.addEventListener('click', () => {
+    setCompactMode(false);
+    setTimeout(() => {
+      newTaskInput.focus();
+    }, 40);
+  });
+  compactCount.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setCompactMode(false);
+      setTimeout(() => {
+        newTaskInput.focus();
+      }, 40);
+    }
+  });
+
+  openMainBtn.addEventListener('click', () => {
+    if (desktopApi && typeof desktopApi.restoreMain === 'function') {
+      desktopApi.restoreMain();
+    } else {
+      window.open(location.href.split('?')[0], 'todayBubbleMain');
+    }
+  });
+
+  quitBtn.addEventListener('click', () => {
+    if (desktopApi && typeof desktopApi.quitApp === 'function') {
+      desktopApi.quitApp();
+      return;
+    }
+    window.close();
+  });
+
+  if (isWidgetMode) {
+    document.body.classList.add('widget-mode');
+    compactBtn.classList.remove('hidden');
+    openMainBtn.classList.remove('hidden');
+    quitBtn.classList.remove('hidden');
+    window.addEventListener('blur', () => {
+      if (!compactMode) {
+        document.body.classList.add('peek');
+      }
+    });
+    window.addEventListener('focus', clearPeek);
+  }
+
+  async function initialize() {
+    let loaded = null;
+    if (desktopApi && typeof desktopApi.getState === 'function') {
+      loaded = normalizeState(await desktopApi.getState());
+    } else {
+      loaded = loadFallbackState();
+    }
+    state.profiles = loaded.profiles;
+    state.activeProfileId = loaded.activeProfileId;
+    state.widgetBounds = loaded.widgetBounds;
+    state.mainBounds = loaded.mainBounds;
+    if (loaded.needsSave) {
+      await persistState();
+    }
+    renderAll();
+    newTaskInput.focus();
+  }
+
+  initialize().catch(() => {
+    renderAll();
+  });
+})();
+</script>
+</body>
+</html>

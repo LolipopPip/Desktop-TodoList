@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 600" role="img" aria-label="Today Bubble 功能界面视觉示意">
+  <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#f3e9e9"/><stop offset="1" stop-color="#e1eaf0"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#6c6972" flood-opacity=".15"/></filter></defs>
+  <rect width="1100" height="600" rx="20" fill="url(#bg)"/>
+  <circle cx="1039" cy="66" r="160" fill="#e6bfc8" opacity=".3"/><circle cx="102" cy="523" r="170" fill="#c9d9e5" opacity=".33"/>
+  <g filter="url(#s)"><rect x="105" y="52" width="870" height="502" rx="20" fill="#fffcfb"/></g>
+  <rect x="105" y="52" width="870" height="86" rx="20" fill="#edf1f4"/><rect x="105" y="119" width="870" height="19" fill="#edf1f4"/>
+  <g fill="#cd97a4"><circle cx="144" cy="95" r="6"/><circle cx="164" cy="95" r="6" fill="#d9c19a"/><circle cx="184" cy="95" r="6" fill="#a4b8c8"/></g>
+  <text x="221" y="103" font-family="Georgia,serif" font-size="24" fill="#536b80">Today Bubble</text><text x="936" y="100" font-family="sans-serif" font-size="12" text-anchor="end" fill="#9197a2" letter-spacing="2">GENREs / 02</text>
+  <text x="148" y="199" font-size="36" font-family="Georgia,serif" fill="#485d70">Your day, at a glance.</text>
+  <text x="150" y="233" font-size="16" font-family="'Noto Sans SC',sans-serif" fill="#a1a1a8">专注今天最重要的几件事</text>
+  <text x="150" y="275" font-size="13" font-family="sans-serif" fill="#9d9da5" letter-spacing="3">TODAY / 4 THINGS</text>
+  <g fill="#faf8f7" stroke="#e7e7e7"><rect x="147" y="293" width="536" height="54" rx="14"/><rect x="147" y="360" width="536" height="54" rx="14"/><rect x="147" y="427" width="536" height="54" rx="14"/></g>
+  <circle cx="182" cy="320" r="11" fill="#84a2a6"/><path d="M176 320l4 4l8-9" stroke="#fff" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="182" cy="387" r="11" fill="#fff" stroke="#adbbc6" stroke-width="2.5"/><circle cx="182" cy="454" r="11" fill="#fff" stroke="#adbbc6" stroke-width="2.5"/>
+  <text x="210" y="326" font-size="17" font-family="'Noto Sans SC',sans-serif" fill="#9ca2a4" text-decoration="line-through">整理今天的实验记录</text>
+  <text x="210" y="394" font-size="17" font-family="'Noto Sans SC',sans-serif" fill="#4a5e70">检查要提交的 Source Data</text>
+  <text x="210" y="461" font-size="17" font-family="'Noto Sans SC',sans-serif" fill="#4a5e70">读二十分钟英语</text>
+  <rect x="586" y="376" width="76" height="24" rx="12" fill="#f5e1dd"/><text x="624" y="393" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#b37f7a">Priority</text>
+  <rect x="145" y="497" width="243" height="37" rx="13" fill="#d2e0e8"/><text x="269" y="522" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#55788e">＋  Add something for today</text>
+  <rect x="735" y="170" width="203" height="186" rx="22" fill="#e8edf4"/>
+  <circle cx="837" cy="250" r="53" fill="none" stroke="#cad9e4" stroke-width="12"/><path d="M837 197A53 53 0 0 1 890 250" fill="none" stroke="#d5a4ae" stroke-width="12" stroke-linecap="round"/>
+  <text x="837" y="259" text-anchor="middle" font-family="Georgia,serif" font-size="30" fill="#607b91">1 / 4</text><text x="837" y="321" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#768ba2">progress, not perfection</text>
+  <text x="938" y="571" text-anchor="end" font-family="sans-serif" font-size="11" fill="#9b8f99" letter-spacing="2">ILLUSTRATIVE PREVIEW · NOT A SCREENSHOT</text>
+</svg>
